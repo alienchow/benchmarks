@@ -1291,7 +1291,7 @@ func BenchmarkSimpleMutex(b *testing.B) {
 	wg := &sync.WaitGroup{}
 	stopChan := make(chan struct{})
 	go updater(c, configs, 5*time.Nanosecond, stopChan)
-	b.Run("Update Small Config 5ns", func(b *testing.B) {
+	b.Run("Update Small Config frequent", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
@@ -1303,9 +1303,10 @@ func BenchmarkSimpleMutex(b *testing.B) {
 	})
 	close(stopChan)
 
+	c = &SimpleMutexConfigs{}
 	stopChan = make(chan struct{})
 	go updater(c, configs, 1*time.Second, stopChan)
-	b.Run("Update Small Config 1s", func(b *testing.B) {
+	b.Run("Update Small Config seldom", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
@@ -1317,9 +1318,10 @@ func BenchmarkSimpleMutex(b *testing.B) {
 	})
 	close(stopChan)
 
+	c = &SimpleMutexConfigs{}
 	stopChan = make(chan struct{})
 	go updater(c, largeConfigs, 5*time.Nanosecond, stopChan)
-	b.Run("Update Large Config 5ns", func(b *testing.B) {
+	b.Run("Update Large Config frequent", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
@@ -1331,9 +1333,10 @@ func BenchmarkSimpleMutex(b *testing.B) {
 	})
 	close(stopChan)
 
+	c = &SimpleMutexConfigs{}
 	stopChan = make(chan struct{})
 	go updater(c, largeConfigs, 1*time.Second, stopChan)
-	b.Run("Update Large Config 1s", func(b *testing.B) {
+	b.Run("Update Large Config seldom", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
@@ -1351,7 +1354,7 @@ func BenchmarkPseudoRCU(b *testing.B) {
 	wg := &sync.WaitGroup{}
 	stopChan := make(chan struct{})
 	go updater(c, configs, 5*time.Nanosecond, stopChan)
-	b.Run("Update Small Config 5ns", func(b *testing.B) {
+	b.Run("Update Small Config frequent", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
@@ -1363,9 +1366,10 @@ func BenchmarkPseudoRCU(b *testing.B) {
 	})
 	close(stopChan)
 
+	c = &PseudoRCUMutexConfigs{}
 	stopChan = make(chan struct{})
 	go updater(c, configs, 1*time.Second, stopChan)
-	b.Run("Update Small Config 1s", func(b *testing.B) {
+	b.Run("Update Small Config seldom", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
@@ -1377,9 +1381,10 @@ func BenchmarkPseudoRCU(b *testing.B) {
 	})
 	close(stopChan)
 
+	c = &PseudoRCUMutexConfigs{}
 	stopChan = make(chan struct{})
 	go updater(c, largeConfigs, 5*time.Nanosecond, stopChan)
-	b.Run("Update Large Config 5ns", func(b *testing.B) {
+	b.Run("Update Large Config frequent", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
@@ -1391,9 +1396,10 @@ func BenchmarkPseudoRCU(b *testing.B) {
 	})
 	close(stopChan)
 
+	c = &PseudoRCUMutexConfigs{}
 	stopChan = make(chan struct{})
 	go updater(c, largeConfigs, 1*time.Second, stopChan)
-	b.Run("Update Large Config 1s", func(b *testing.B) {
+	b.Run("Update Large Config seldom", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			wg.Add(1)
 			go func() {
