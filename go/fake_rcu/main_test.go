@@ -1270,218 +1270,252 @@ func(c *PseudoRCUMutexConfigs) Get(config string) (bool, error) {
 
 func BenchmarkSimpleMutex(b *testing.B) {
 	c := &SimpleMutexConfigs{}
-	wg := &sync.WaitGroup{}
 
+	wg1 := &sync.WaitGroup{}
 	b.Run("Update", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			wg.Add(1)
 			go func() {
-				defer wg.Done()
-				c.Update(configs)
+				wg1.Add(1)
+				go func() {
+					defer wg1.Done()
+					c.Update(configs)
+				}()
 			}()
-			wg.Add(1)
+			wg1.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg1.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg1.Wait()
 	})
 
+	wg2 := &sync.WaitGroup{}
 	b.Run("Update/5", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 5 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(configs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 5 == 0 {
+					wg2.Add(1)
+					go func() {
+						defer wg2.Done()
+						c.Update(configs)
+					}()
+				}
+			}(i)
+			wg2.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg2.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg2.Wait()
 	})
 
+	wg3 := &sync.WaitGroup{}
 	b.Run("Update/10", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 10 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(configs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 10 == 0 {
+					wg3.Add(1)
+					go func() {
+						defer wg3.Done()
+						c.Update(configs)
+					}()
+				}
+			}(i)
+			wg3.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg3.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg3.Wait()
 	})
 
+	wg4 := &sync.WaitGroup{}
 	b.Run("Large Update", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			wg.Add(1)
 			go func() {
-				defer wg.Done()
-				c.Update(largeConfigs)
+				wg4.Add(1)
+				go func() {
+					defer wg4.Done()
+					c.Update(largeConfigs)
+				}()
 			}()
-			wg.Add(1)
+			wg4.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg4.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg4.Wait()
 	})
 
+	wg5 := &sync.WaitGroup{}
 	b.Run("Large Update/5", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 5 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(largeConfigs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 5 == 0 {
+					wg5.Add(1)
+					go func() {
+						defer wg5.Done()
+						c.Update(largeConfigs)
+					}()
+				}
+			}(i)
+			wg5.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg5.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg5.Wait()
 	})
 
+	wg6 := &sync.WaitGroup{}
 	b.Run("Large Update/10", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 10 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(largeConfigs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 10 == 0 {
+					wg6.Add(1)
+					go func() {
+						defer wg6.Done()
+						c.Update(largeConfigs)
+					}()
+				}
+			}(i)
+			wg6.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg6.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg6.Wait()
 	})
 }
 
 func BenchmarkPseudoRCU(b *testing.B) {
 	c := &PseudoRCUMutexConfigs{}
-	wg := &sync.WaitGroup{}
 
+	wg1 := &sync.WaitGroup{}
 	b.Run("Update", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			wg.Add(1)
 			go func() {
-				defer wg.Done()
-				c.Update(configs)
+				wg1.Add(1)
+				go func() {
+					defer wg1.Done()
+					c.Update(configs)
+				}()
 			}()
-			wg.Add(1)
+			wg1.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg1.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg1.Wait()
 	})
 
+	wg2 := &sync.WaitGroup{}
 	b.Run("Update/5", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 5 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(configs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 5 == 0 {
+					wg2.Add(1)
+					go func() {
+						defer wg2.Done()
+						c.Update(configs)
+					}()
+				}
+			}(i)
+			wg2.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg2.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg2.Wait()
 	})
 
+	wg3 := &sync.WaitGroup{}
 	b.Run("Update/10", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 10 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(configs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 10 == 0 {
+					wg3.Add(1)
+					go func() {
+						defer wg3.Done()
+						c.Update(configs)
+					}()
+				}
+			}(i)
+			wg3.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg3.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg3.Wait()
 	})
 
+	wg4 := &sync.WaitGroup{}
 	b.Run("Large Update", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			wg.Add(1)
 			go func() {
-				defer wg.Done()
-				c.Update(largeConfigs)
+				wg4.Add(1)
+				go func() {
+					defer wg4.Done()
+					c.Update(largeConfigs)
+				}()
 			}()
-			wg.Add(1)
+			wg4.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg4.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg4.Wait()
 	})
 
+	wg5 := &sync.WaitGroup{}
 	b.Run("Large Update/5", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 5 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(largeConfigs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 5 == 0 {
+					wg5.Add(1)
+					go func() {
+						defer wg5.Done()
+						c.Update(largeConfigs)
+					}()
+				}
+			}(i)
+			wg5.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg5.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg5.Wait()
 	})
 
+	wg6 := &sync.WaitGroup{}
 	b.Run("Large Update/10", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			if i % 10 == 0 {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					c.Update(largeConfigs)
-				}()
-			}
-			wg.Add(1)
+			go func(check int) {
+				if check % 10 == 0 {
+					wg6.Add(1)
+					go func() {
+						defer wg6.Done()
+						c.Update(largeConfigs)
+					}()
+				}
+			}(i)
+			wg6.Add(1)
 			go func() {
-				defer wg.Done()
+				defer wg6.Done()
 				_, _ = c.Get("feature_0")
 			}()
 		}
-		wg.Wait()
+		wg6.Wait()
 	})
 }
