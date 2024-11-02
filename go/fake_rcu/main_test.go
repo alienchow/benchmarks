@@ -2,6 +2,7 @@ package main
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 	"errors"
@@ -1269,6 +1270,31 @@ func(c *PseudoRCUMutexConfigs) Get(config string) (bool, error) {
 	return false, errors.New("invalid config")
 }
 
+// Atomic RCU
+type AtomicRCUConfigs struct{
+	configs atomic.Value
+}
+
+func(c *AtomicRCUConfigs) Update(newConfigs map[string]bool) {
+	copyConfigs := map[string]bool{}
+	for k, v := range newConfigs{
+		copyConfigs[k] = v
+	}
+	c.configs.Store(copyConfigs)
+}
+
+func(c *AtomicRCUConfigs) Get(config string) (bool, error) {
+	currentConfigs, ok := c.configs.Load().(map[string]bool)
+	if !ok {
+		return false, errors.New("invalid config state")
+	}
+
+	if result, ok := currentConfigs[config]; ok {
+		return result, nil
+	}
+	return false, errors.New("invalid config")
+}
+
 type configInterface interface{
 	Update(map[string]bool)
 	Get(string) (bool, error)
@@ -1397,6 +1423,69 @@ func BenchmarkPseudoRCU(b *testing.B) {
 	close(stopChan)
 
 	c = &PseudoRCUMutexConfigs{}
+	stopChan = make(chan struct{})
+	go updater(c, largeConfigs, 1*time.Second, stopChan)
+	b.Run("Update Large Config seldom", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, _ = c.Get("feature_0")
+			}()
+		}
+		wg.Wait()
+	})
+	close(stopChan)
+}
+
+func BenchmarkAtomicRCU(b *testing.B) {
+	c := &AtomicRCUConfigs{}
+	wg := &sync.WaitGroup{}
+	stopChan := make(chan struct{})
+	go updater(c, configs, 5*time.Nanosecond, stopChan)
+	b.Run("Update Small Config frequent", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, _ = c.Get("feature_0")
+			}()
+		}
+		wg.Wait()
+	})
+	close(stopChan)
+
+	c = &AtomicRCUConfigs{}
+	stopChan = make(chan struct{})
+	go updater(c, configs, 1*time.Second, stopChan)
+	b.Run("Update Small Config seldom", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, _ = c.Get("feature_0")
+			}()
+		}
+		wg.Wait()
+	})
+	close(stopChan)
+
+	c = &AtomicRCUConfigs{}
+	stopChan = make(chan struct{})
+	go updater(c, largeConfigs, 5*time.Nanosecond, stopChan)
+	b.Run("Update Large Config frequent", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, _ = c.Get("feature_0")
+			}()
+		}
+		wg.Wait()
+	})
+	close(stopChan)
+
+	c = &AtomicRCUConfigs{}
 	stopChan = make(chan struct{})
 	go updater(c, largeConfigs, 1*time.Second, stopChan)
 	b.Run("Update Large Config seldom", func(b *testing.B) {
